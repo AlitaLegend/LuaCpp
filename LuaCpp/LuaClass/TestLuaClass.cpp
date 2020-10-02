@@ -13,7 +13,7 @@ void TestLuaClass::Test()
 {
 	if (CreateLuaState())
 	{
-		if (!dofile(_strdup("./ex5.lua")))
+		if (!DoFile(_strdup("./ex5.lua")))
 		{
 			return;
 		}

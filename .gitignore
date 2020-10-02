@@ -69,3 +69,5 @@ Release/LuaCpp.exe
 Release/LuaCpp.iobj
 Release/LuaCpp.ipdb
 Release/LuaCpp.pdb
+.vs/LuaCpp/v16/ipch/AutoPCH/18bf5b258416d30f/TESTLUACLASS.ipch
+.vs/LuaCpp/config/applicationhost.config

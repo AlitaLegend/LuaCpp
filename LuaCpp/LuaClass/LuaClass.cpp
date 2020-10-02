@@ -1,123 +1,109 @@
 #include "LuaClass.h"
 
-LuaClass::LuaClass():m_lua(NULL)
+LuaClass::LuaClass():LuaState(NULL)
 { 
 }
 
-
 LuaClass::~LuaClass()
 {
-	if (m_lua)
+	if (LuaState)
 	{
-		lua_close(m_lua);
+		lua_close(LuaState);
 	}
 }
-
 
 //初始化Lua环境
 bool LuaClass::CreateLuaState()
 {
-	m_lua = luaL_newstate();
-	if (m_lua == NULL)
+	LuaState = luaL_newstate();
+	if (LuaState == NULL)
 	{
-		printf("error Lua初始化环境失败!程序异常...\n");
+		printf("LuaClass@CreateLuaState Fail!...\n");
 		return false;
 	}
-	luaL_openlibs(m_lua);
+	luaL_openlibs(LuaState);
 	return true;
 
 }
 
-void LuaClass::PrintStackSize(char* tag)
+void LuaClass::PrintStackSize(char* Tag)
 {
-	 
-	if (!tag)
+	if (!Tag)
 	{
-		cout << lua_gettop(m_lua) << endl;
+		cout << lua_gettop(LuaState) << endl;
 	}
 	else
 	{
-		cout << tag<<":" <<lua_gettop(m_lua) << endl;
+		cout << Tag <<":" <<lua_gettop(LuaState) << endl;
 	}
-
 }
 
-
-void LuaClass::PrintStack(char* tag)
+void LuaClass::PrintStack(char* Tag)
 {
-	int size_ = lua_gettop(m_lua);
-
-	
-	if (tag)
+	int LuaStateSize = lua_gettop(LuaState);
+	if (Tag)
 	{ 
-		cout <<"    ******"<<tag << "******"<< endl;
+		cout <<"------------"<< Tag << "------------STT"<< endl;
 	} 
-	printf("L:0x%x\n", m_lua);
-	printf("size:%d\n",size_);
-	for (int i = 1; i <= size_; i++)
-	{
-		printf("[%d](%s):%s\n", i, luaL_typename(m_lua, i),luaL_tolstring(m_lua,i,NULL));
-		lua_pop(m_lua, 1);
-	}
-	printf("\n\n");
 
+	printf("L:0x%x\n", LuaState);
+	printf("size:%d\n", LuaStateSize);
+	for (int i = 1; i <= LuaStateSize; i++)
+	{
+		printf("[%d](%s):%s\n", i, luaL_typename(LuaState, i), luaL_tolstring(LuaState, i, NULL));
+		lua_pop(LuaState, 1);
+	}
+	cout << "------------" << Tag << "------------END" << endl;
 }
 
-//#include <windows.h>
-bool LuaClass::dofile(char* f)
+bool LuaClass::DoFile(char* FilePath)
 {
-	if (f==NULL)
+	if (FilePath ==NULL)
 	{
 		return false;
 	}
-	if (luaL_dofile(m_lua, f)!=0)
+	if (luaL_dofile(LuaState, FilePath) != 0)
 	{
-		char* errostr = (char*)lua_tostring(m_lua, -1);
-		cout << "dofile失败:"<< errostr << endl;
-		//::MessageBoxA(0, errostr, "dofile失败", 0);
-		lua_pop(m_lua,1);
+		char* ErrorMsg = (char*)lua_tostring(LuaState, -1);
+		cout << "LuaClass@:dofile Fail! ErrorMsg = "<< ErrorMsg << endl;
+		lua_pop(LuaState, 1);
 		return false;
 	}
+	return true;
+}
 
+bool LuaClass::DoString(char* LuaString)
+{
+	if (LuaString == NULL)
+	{
+		return false;
+	}
+	if (luaL_dostring(LuaState, LuaString) != 0)
+	{
+		char* ErrorMsg = (char*)lua_tostring(LuaState, -1);
+		cout << "LuaClass@:dofile Fail! ErrorMsg = " << ErrorMsg << endl;
+		lua_pop(LuaState, 1);
+		return false;
+	}
 	return  true;
 }
 
 
-
-bool LuaClass::dostring(char* f)
+bool LuaClass::GetGlobal(char* FieldName)
 {
-	if (f == NULL)
-	{
-		return false;
-	}
-	if (luaL_dostring(m_lua, f) != 0)
-	{
-		char* errostr = (char*)lua_tostring(m_lua, -1);
-		cout << "dostring失败:" << errostr << endl;
-		//::MessageBoxA(0, errostr, "dofile失败", 0);
-		lua_pop(m_lua, 1);
-		return false;
-	}
-
-	return  true;
-}
-
-
-bool LuaClass::GetGlobal(char* name)
-{
-	if (lua_getglobal(m_lua, name)<=0)
+	if (lua_getglobal(LuaState, FieldName) <= 0)
 	{
 		return false;
 	}
 	return true;
 }
 
-bool LuaClass::SetGlobal(char* name)
+bool LuaClass::SetGlobal(char* FieldName)
 {
-	if (lua_gettop(m_lua)<1)
+	if (lua_gettop(LuaState) < 1)
 	{
 		return false;
 	}
-	lua_setglobal(m_lua, name);
+	lua_setglobal(LuaState, FieldName);
 	return true;
 }

@@ -10,217 +10,212 @@ public:
 	bool CreateLuaState();
 	void PrintStackSize(char* tag = NULL);
 	void PrintStack(char* tag = NULL);
-	bool dofile(char* f);
-	bool dostring(char* f);
-	bool GetGlobal(char* name);
-	bool SetGlobal(char* name);
+	bool DoFile(char* FilePath);
+	bool DoString(char* LuaString);
+	bool GetGlobal(char* FieldName);
+	bool SetGlobal(char* FieldName);
 
 	inline lua_State* GetLuaState()
 	{
-		return m_lua;
+		return LuaState;
 	}
 	
 	LuaClass();
 	~LuaClass();
 
-
-
-
-	///////////////////////////////特化Get///////////////////////////////////////////
-	template<typename _Ty>
-	_Ty LuaGet(int index = -1);	
-	template<> inline	char* LuaGet<char*>(int index)
+	///////////////////////////////特化Get///////////////////////////////
+	template<typename ReturnT>
+	ReturnT LuaGet(int Index = -1);	
+	template<> inline char* LuaGet<char*>(int Index)
 	{	 
-		if (!LuaCheck<char*>(index))
+		if (!LuaCheck<char*>(Index))
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGet@error check char!" << endl;
 		}
-		return (char*)lua_tostring(m_lua, index);
+		return (char*)lua_tostring(LuaState, Index);
 	}	
-	template<> string LuaGet<string>(int index)
+
+	template<> string LuaGet<string>(int Index)
 	{
-		if (!LuaCheck<char*>(index))
+		if (!LuaCheck<char*>(Index))
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGet@error check string!" << endl;
 		}
 
-		string tmpstr = (char*)lua_tostring(m_lua, index);
+		string tmpstr = (char*)lua_tostring(LuaState, Index);
 		return std::move(tmpstr);
 	}
-	template<> inline int LuaGet<int>(int index /* = -1 */)
+
+	template<> inline int LuaGet<int>(int Index /* = -1 */)
 	{
 
-		if (!LuaCheck<int>(index))
+		if (!LuaCheck<int>(Index))
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGet@error get int!" << endl;
 		}
 
-		return lua_tonumber(m_lua, index);
+		return lua_tonumber(LuaState, Index);
 	}
-	template<> inline double LuaGet<double>(int index /* = -1 */)
+
+	template<> inline double LuaGet<double>(int Index /* = -1 */)
 	{
 
-		if (!LuaCheck<double>(index))
+		if (!LuaCheck<double>(Index))
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGet@error get double!" << endl;
 		}
 
-		return lua_tonumber(m_lua, index);
+		return lua_tonumber(LuaState, Index);
 	}
 
-	///////////////////////////////特化Check///////////////////////////////////////////
-	template<typename _Ty>
-	bool LuaCheck(int index = -1);
-	template<>	bool LuaCheck<char*>(int index)//检查是否是字符串
+	///////////////////////////////特化Check///////////////////////////////
+	template<typename ReturnT>
+	bool LuaCheck(int Index = -1);
+	template<>	bool LuaCheck<char*>(int Index)//检查是否是字符串
 	{
-		return lua_isstring(m_lua, index) == 0 ? false : true;
+		return lua_isstring(LuaState, Index) == 0 ? false : true;
 	}
 
-	template<>	bool LuaCheck<string>(int index)
+	template<>	bool LuaCheck<string>(int Index)
 	{
-		return lua_isstring(m_lua, index) == 0 ? false : true;
+		return lua_isstring(LuaState, Index) == 0 ? false : true;
 	}
 
-	template<>	bool LuaCheck<int>(int index)
+	template<>	bool LuaCheck<int>(int Index)
 	{
-		return lua_isnumber(m_lua, index) == 0 ? false : true;
+		return lua_isnumber(LuaState, Index) == 0 ? false : true;
 	}
 
-	template<>	bool LuaCheck<double>(int index)
+	template<>	bool LuaCheck<double>(int Index)
 	{
-		return lua_isnumber(m_lua, index) == 0 ? false : true;
+		return lua_isnumber(LuaState, Index) == 0 ? false : true;
 	}
 
-	//////////////////////////////////特化Push////////////////////////////////////////
-	template<typename _TY>
-	void LuaPush(_TY);
+	//////////////////////////////////特化Push//////////////////////////////////
+	template<typename ArgT>
+	void LuaPush(ArgT);
 	template<> void LuaPush<char*>(char* t)
 	{
-		lua_pushstring(m_lua, t);
+		lua_pushstring(LuaState, t);
 	}
 
 	template<> void LuaPush<int>(int t)
 	{
-		lua_pushnumber(m_lua, t);
+		lua_pushnumber(LuaState, t);
 	}
 
 	template<> void LuaPush<double>(double t)
 	{
-		lua_pushnumber(m_lua, t);
+		lua_pushnumber(LuaState, t);
 	}
 
-	//////////////////////////////特化 获取全局变量////////////////////////////////////////////
-	template<typename _Ty>
-	_Ty LuaGetGlobal(char*global, bool _pop = true);
-	template<>	char* LuaGetGlobal<char*>(char*global, bool _pop)
+	//////////////////////////////特化 获取全局变量//////////////////////////////
+	template<typename ReturnT>
+	ReturnT LuaGetGlobal(char* Global, bool IsPop = true);
+	template<>	char* LuaGetGlobal<char*>(char* Global, bool IsPop)
 	{
-		if (GetGlobal(global) == false)
+		if (GetGlobal(Global) == false)
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGetGlobal@error get char!" << endl;
 		} 
 		char* tmp = LuaGet<char*>();
-		//char* tmp = (char*)lua_tostring(m_lua, -1);
-		if (_pop)
+		if (IsPop)
 		{ 
-			lua_pop(m_lua, 1); 
+			lua_pop(LuaState, 1); 
 		} 
-		 
-	     return tmp;
-	 
-	
+	    return tmp;
 	}
-	template<> string LuaGetGlobal<string>(char*global, bool _pop)
+
+	template<> string LuaGetGlobal<string>(char* Global, bool IsPop)
 	{
-		if (GetGlobal(global) == false)
+		if (GetGlobal(Global) == false)
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGetGlobal@error get string!" << endl;
 		} 
-		//string tmpstr = (char*)lua_tostring(m_lua, -1);
 		string tmpstr = LuaGet<char*>();
-		if (_pop)
+		if (IsPop)
 		{ 
-			lua_pop(m_lua, 1); 
+			lua_pop(LuaState, 1); 
 		} 
 		return std::move(tmpstr);
 	}
-	template<> int LuaGetGlobal<int>(char*global, bool _pop)
+
+	template<> int LuaGetGlobal<int>(char* Global, bool IsPop)
 	{
-		if (GetGlobal(global) == false)
+		if (GetGlobal(Global) == false)
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGetGlobal@error get >!" << endl;
 		} 
 		int tmp = LuaGet<int>();
-		//int tmp  = lua_tonumber(m_lua, -1);
-		if (_pop)
+		if (IsPop)
 		{
-			lua_pop(m_lua, 1);
-		}
-		return tmp;
-	}
-	template<> double LuaGetGlobal<double>(char*global, bool _pop)
-	{
-		if (GetGlobal(global) == false)
-		{
-			cout << "erro check!" << endl;
-		} 
-		double tmp = LuaGet<double>();
-		//double tmp = lua_tonumber(m_lua, -1);
-		if (_pop)
-		{
-			lua_pop(m_lua, 1);
+			lua_pop(LuaState, 1);
 		}
 		return tmp;
 	}
 
-	//////////////////////////////特化 设置全局变量////////////////////////////////////////////
-	template<typename _Ty>
-	bool LuaSetGlobal(_Ty data, char*global);
-	template<>	bool LuaSetGlobal<char*>(char*data, char*global)
+	template<> double LuaGetGlobal<double>(char* Global, bool IsPop)
 	{
-		lua_pushstring(m_lua, data);
-		if (SetGlobal(global) == false)
+		if (GetGlobal(Global) == false)
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaGetGlobal@error get double>!" << endl;
+		} 
+		double tmp = LuaGet<double>();
+		if (IsPop)
+		{
+			lua_pop(LuaState, 1);
+		}
+		return tmp;
+	}
+
+	//////////////////////////////特化 设置全局变量//////////////////////////////
+	template<typename ArgT>
+	bool LuaSetGlobal(ArgT Data, char* Global);
+	template<>	bool LuaSetGlobal<char*>(char*Data, char*Global)
+	{
+		lua_pushstring(LuaState, Data);
+		if (SetGlobal(Global) == false)
+		{
+			cout << "LuaSetGlobal@error get char" << endl;
 			return false;
 		}
 		return true;
 	} 
-	template<>	bool LuaSetGlobal<int>(int data, char*global)
+
+	template<>	bool LuaSetGlobal<int>(int Data, char*Global)
 	{
-		lua_pushnumber(m_lua, data);
-		if (SetGlobal(global) == false)
+		lua_pushnumber(LuaState, Data);
+		if (SetGlobal(Global) == false)
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaSetGlobal@error get int!" << endl;
 			return false;
 		}
 		return true;
 	}
 
-	template<>	bool LuaSetGlobal<double>(double data, char*global)
+	template<>	bool LuaSetGlobal<double>(double Data, char*Global)
 	{
-		lua_pushnumber(m_lua, data);
-		if (SetGlobal(global) == false)
+		lua_pushnumber(LuaState, Data);
+		if (SetGlobal(Global) == false)
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaSetGlobal@error get double!" << endl;
 			return false;
 		}
 		return true;
 	}
 
-	template<>	bool LuaSetGlobal<string>(string data, char*global)
+	template<>	bool LuaSetGlobal<string>(string Data, char*Global)
 	{
-		lua_pushstring(m_lua, data.c_str());
-		if (SetGlobal(global) == false)
+		lua_pushstring(LuaState, Data.c_str());
+		if (SetGlobal(Global) == false)
 		{
-			cout << "erro check!" << endl;
+			cout << "LuaSetGlobal@error get string!" << endl;
 			return false;
 		}
 		return true;
 	}
-	 
-
 	
 private:
-	lua_State* m_lua;
+	lua_State* LuaState;
 };
 
